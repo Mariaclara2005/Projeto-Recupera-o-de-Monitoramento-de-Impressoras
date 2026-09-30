@@ -14,10 +14,10 @@ ARQUIVO = RAIZ / "src" / "Planilha_Teste_Automacao_Impressoras1.xlsx"
 ABA_BASE = "Planilha1"
 ABA_TRAT = "Tratativas"
 
-MODO = "ENVIAR"      # "SIMULAR" (só mostra) | "RASCUNHO" (salva no Outlook) | "ENVIAR"
-EMAIL_TESTE = ""      # se preenchido, TODOS os e-mails vão para este endereço
+MODO = "SIMULAR"      # "SIMULAR" (só mostra) | "RASCUNHO" (salva no Outlook) | "ENVIAR"
+EMAIL_TESTE = "maria.camposprofeta@gmail.com"      # se preenchido, TODOS os e-mails vão para este endereço
 CONTA_REMETENTE = ""  # opcional: e-mail da conta do Outlook que deve enviar
-LIMITE_EMAILS = 3    # trava de segurança: máx. de e-mails por execução
+LIMITE_EMAILS = 10    # trava de segurança: máx. de e-mails por execução
 
 STATUS_ALVO = ["sem monitoramento"]   # comparação sem maiúsculas/minúsculas
 MARCADOR = "[AUTO]"   # identifica, na aba Tratativas, o que a automação enviou
@@ -200,6 +200,39 @@ def main():
         except Exception as e:
             print(f"   ERRO: {type(e).__name__}: {e}")
 
+import sys
+import time
+import traceback
+from contextlib import redirect_stdout, redirect_stderr
+
+INTERVALO_MIN = 15   # para a demo, use 1
+LOG = RAIZ / "logs" / "automacao.log"
+
+
+def rodar_uma_vez():
+    """Uma rodada completa. Nenhum erro derruba o modo contínuo."""
+    try:
+        main()
+    except SystemExit as e:      # avisos como "planilha aberta"
+        print(e)
+    except Exception:
+        traceback.print_exc()
+
 
 if __name__ == "__main__":
-    main()
+    if "--loop" in sys.argv:     # fica rodando, verificando a cada X minutos
+        print(f"Automação ativa. Verificando a cada {INTERVALO_MIN} min. Ctrl+C para parar.")
+        try:
+            while True:
+                print(f"\n===== {datetime.now():%d/%m/%Y %H:%M:%S} =====")
+                rodar_uma_vez()
+                time.sleep(INTERVALO_MIN * 60)
+        except KeyboardInterrupt:
+            print("\nAutomação encerrada.")
+    elif "--log" in sys.argv:    # uma rodada, gravando em logs\automacao.log
+        LOG.parent.mkdir(exist_ok=True)
+        with open(LOG, "a", encoding="utf-8") as f, redirect_stdout(f), redirect_stderr(f):
+            print(f"===== {datetime.now():%d/%m/%Y %H:%M:%S} =====")
+            rodar_uma_vez()
+    else:                        # uma rodada, na tela (como hoje)
+        main()
