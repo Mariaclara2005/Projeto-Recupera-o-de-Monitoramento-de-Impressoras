@@ -1,0 +1,15 @@
+# Ambiente e cache
+.venv/
+__pycache__/
+*.pyc
+
+# Dados e logs (clientes reais, LGPD) - nunca versionar
+data/*
+!data/.gitkeep
+logs/
+backup_*.xlsx
+*.xlsx
+*.csv
+
+# Segredos
+.env
